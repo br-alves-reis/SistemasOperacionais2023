@@ -1,0 +1,71 @@
+using System;
+using System.Threading;
+
+class Program
+{
+    static SemaphoreSlim mutex = new SemaphoreSlim(1);
+    static SemaphoreSlim writeMutex = new SemaphoreSlim(1);
+    static int leitores = 0;
+    static int data = 0;
+
+    static void Main(string[] args)
+    {
+        int numLeitores = 3;
+        int numEscritores = 2;
+
+        for (int i = 0; i < numLeitores; i++)
+        {
+            int LeitorId = i;
+            new Thread(() => Leitor(LeitorId)).Start();
+        }
+
+        for (int i = 0; i < numEscritores; i++)
+        {
+            int EscritorId = i;
+            new Thread(() => Escritor(EscritorId)).Start();
+        }
+
+        Console.ReadLine();
+    }
+
+    static void Leitor(int id)
+    {
+        while (true)
+        {
+            mutex.Wait();
+            leitores++;
+            if (leitores == 1)
+            {
+                writeMutex.Wait();
+            }
+            mutex.Release();
+
+            Console.WriteLine($"Leitor {id} esta lendo dados: {data}");
+            Thread.Sleep(1000); // Reading
+
+            mutex.Wait();
+            leitores--;
+            if (leitores == 0)
+            {
+                writeMutex.Release();
+            }
+            mutex.Release();
+
+            Thread.Sleep(1000); // Resting
+        }
+    }
+
+    static void Escritor(int id)
+    {
+        while (true)
+        {
+            writeMutex.Wait();
+            data++;
+            Console.WriteLine($"Escritor {id} esta escrevendo dados: {data}");
+            Thread.Sleep(2000); // Writing
+            writeMutex.Release();
+
+            Thread.Sleep(2000); // Resting
+        }
+    }
+}
