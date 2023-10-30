@@ -1,0 +1,47 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+class Program
+{
+    static int numFilosofos = 5;
+    static Semaphore[] garfos = new Semaphore[numFilosofos];
+
+    static void Main(string[] args)
+    {
+        for (int i = 0; i < numFilosofos; i++)
+        {
+            garfos[i] = new Semaphore(1, 1);
+        }
+
+        for (int i = 0; i < numFilosofos; i++)
+        {
+            int filosofoId = i;
+            Task.Run(() => Filosofo(filosofoId));
+        }
+
+        Console.ReadLine();
+    }
+
+    static void Filosofo(int id)
+    {
+        while (true)
+        {
+            Console.WriteLine($"Filósofo {id} está pensando.");
+            Thread.Sleep(2000); // Pensando
+
+            Console.WriteLine($"Filósofo {id} está com fome e tentando pegar os garfos.");
+
+            garfos[id].WaitOne();
+            garfos[(id + 1) % numFilosofos].WaitOne();
+
+            Console.WriteLine($"Filósofo {id} está comendo.");
+            Thread.Sleep(2000); // Comendo
+
+            garfos[id].Release();
+            garfos[(id + 1) % numFilosofos].Release();
+
+            Console.WriteLine($"Filósofo {id} terminou de comer e liberou os garfos.");
+        }
+    }
+}
